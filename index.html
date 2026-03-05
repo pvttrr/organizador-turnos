@@ -1,0 +1,42 @@
+<!DOCTYPE html> 
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turnos RPG Futebol</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="scoreboard">
+    <div id="match-time" style="font-size: 1.3em;">1º TEMPO</div>
+    <div style="font-size: 1em; color: var(--ball);">
+        RODADA: <span id="round-count">1</span> / 30
+    </div>
+</div>
+
+<div class="stadium">
+    <div class="setup-area">
+        <input type="text" id="p-name" placeholder="Nome do Jogador">
+        <select id="p-team">
+            <option value="A">Time A (Azul)</option>
+            <option value="B">Time B (Rosa)</option>
+        </select>
+        <input type="number" id="p-init" placeholder="Ini">
+        <button class="btn-dice" onclick="roll1d20()">🎲</button>
+        <button class="btn-add" onclick="addPlayer()">+</button>
+    </div>
+
+    <div id="player-list"></div>
+
+    <div class="counter-info" id="turn-stats">Ações da rodada: 0 / 0</div>
+
+    <div class="controls">
+        <button class="btn-main" style="background: white;" onclick="sortAndInterleave()">Organizar (A-B)</button>
+        <button class="btn-main" style="background: #38b000; color: white;" onclick="nextTurn()">Ação Finalizada ➔</button>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
