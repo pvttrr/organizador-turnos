@@ -1,5 +1,6 @@
 let players = [], ballOwnerId = null, currentRound = 1, currentHalf = 1, lastTeam = null, history = [];
 let timerInterval, seconds = 0, timerRunning = false;
+let dragSrcIndex = null; // Armazena quem está sendo arrastado
 
 // --- DADO E INICIALIZAÇÃO ---
 function roll1d20() { 
@@ -82,6 +83,41 @@ function nextTurn() {
     render();
 }
 
+// --- ARRASTAR E SOLTAR (DRAG AND DROP) ---
+function handleDragStart(e) {
+    dragSrcIndex = this.dataset.index;
+    this.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragOver(e) {
+    if (e.preventDefault) e.preventDefault();
+    this.classList.add('over');
+    return false;
+}
+
+function handleDragLeave() {
+    this.classList.remove('over');
+}
+
+function handleDrop(e) {
+    if (e.stopPropagation) e.stopPropagation();
+    const targetIndex = this.dataset.index;
+    
+    if (dragSrcIndex !== targetIndex) {
+        save();
+        const movedPlayer = players.splice(dragSrcIndex, 1)[0];
+        players.splice(targetIndex, 0, movedPlayer);
+        render();
+    }
+    return false;
+}
+
+function handleDragEnd() {
+    this.classList.remove('dragging');
+    document.querySelectorAll('.player-card').forEach(c => c.classList.remove('over'));
+}
+
 // --- HISTÓRICO E RENDERIZAÇÃO ---
 function save() { 
     history.push(JSON.stringify({ 
@@ -104,6 +140,12 @@ function undo() {
     } 
 }
 
+function toggleBall(id) {
+    save();
+    ballOwnerId = (ballOwnerId === id ? null : id);
+    render();
+}
+
 function render() {
     const list = document.getElementById('player-list'); 
     list.innerHTML = '';
@@ -120,24 +162,32 @@ function render() {
         alertBox.style.background = lastTeam === 'A' ? 'var(--team-b-color)' : 'var(--team-a-color)';
     }
 
-    players.forEach(p => {
+    players.forEach((p, index) => {
         const card = document.createElement('div');
         card.className = `player-card team-${p.team} ${p.finished ? 'finished' : ''} ${p.id === ballOwnerId ? 'has-ball' : ''}`;
+        
+        // Drag and Drop configs
+        card.draggable = true;
+        card.dataset.index = index;
+
+        const actionDone = p.finished ? `<span class="action-label">Ação Realizada</span>` : '';
+
         card.innerHTML = `
             <div style="font-weight:bold; min-width:30px">${p.init}</div>
             <div style="flex-grow:1">${p.name}</div>
+            ${actionDone} 
             <div style="cursor:pointer; font-size:1.5em" onclick="toggleBall(${p.id})">⚽</div>
         `;
+
+        // Listeners para o Drag and Drop
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragover', handleDragOver);
+        card.addEventListener('drop', handleDrop);
+        card.addEventListener('dragend', handleDragEnd);
+        card.addEventListener('dragleave', handleDragLeave);
+
         list.appendChild(card);
     });
 }
 
-// Função auxiliar para alternar a posse de bola
-function toggleBall(id) {
-    save();
-    ballOwnerId = (ballOwnerId === id ? null : id);
-    render();
-}
-
-// Inicializa a tela
 render();
