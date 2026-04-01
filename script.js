@@ -1,200 +1,143 @@
-let players = [];
-let ballOwnerId = null;
-let currentRound = 1;
-let currentHalf = 1;
+let players = [], ballOwnerId = null, currentRound = 1, currentHalf = 1, lastTeam = null, history = [];
+let timerInterval, seconds = 0, timerRunning = false;
 
-/* CONTROLE DE ALTERNÂNCIA */
-let nextTeamTurn = 'A';
-
-function roll1d20() {
-    document.getElementById('p-init').value = Math.floor(Math.random() * 20) + 1;
+// --- DADO E INICIALIZAÇÃO ---
+function roll1d20() { 
+    document.getElementById('p-init').value = Math.floor(Math.random() * 20) + 1; 
 }
 
 function addPlayer() {
-    const nameInput = document.getElementById('p-name');
-    const teamInput = document.getElementById('p-team');
-    const initInput = document.getElementById('p-init');
-
-    if (nameInput.value) {
-        players.push({
-            id: Date.now(),
-            name: nameInput.value,
-            team: teamInput.value,
-            init: parseInt(initInput.value) || 0,
-            finished: false
-        });
-
-        nameInput.value = '';
-        initInput.value = '';
+    const n = document.getElementById('p-name'), 
+          t = document.getElementById('p-team'), 
+          i = document.getElementById('p-init');
+    if (n.value) {
+        players.push({ id: Date.now(), name: n.value, team: t.value, init: parseInt(i.value) || 0, finished: false });
+        n.value = ''; 
+        i.value = ''; 
         render();
     }
 }
 
-function toggleBall(id) {
-    ballOwnerId = (ballOwnerId === id) ? null : id;
-    render();
+// --- CONTROLE DO TEMPO ---
+function toggleTimer() {
+    timerRunning = !timerRunning;
+    const btn = document.getElementById('btn-timer');
+    if (timerRunning) {
+        btn.innerText = "PAUSAR JOGO"; 
+        btn.style.background = "#ff4d4d"; 
+        btn.style.color = "white";
+        timerInterval = setInterval(() => { seconds++; updateTimer(); }, 1000);
+    } else {
+        btn.innerText = "RETOMAR JOGO"; 
+        btn.style.background = "#38b000"; 
+        clearInterval(timerInterval);
+    }
 }
 
-function sortAndInterleave() {
-    let teamA = players.filter(p => p.team === 'A').sort((a, b) => b.init - a.init);
-    let teamB = players.filter(p => p.team === 'B').sort((a, b) => b.init - a.init);
+function updateTimer() {
+    const m = Math.floor(seconds/60).toString().padStart(2,'0'), 
+          s = (seconds%60).toString().padStart(2,'0');
+    document.getElementById('timer').innerText = `${m}:${s}`;
+}
 
-    let interleaved = [];
-    let maxLength = Math.max(teamA.length, teamB.length);
-
-    for (let i = 0; i < maxLength; i++) {
-        if (teamA[i]) interleaved.push(teamA[i]);
-        if (teamB[i]) interleaved.push(teamB[i]);
-    }
-
-    players = interleaved;
-    players.forEach(p => p.finished = false);
-    nextTeamTurn = 'A';
-    render();
+// --- LÓGICA DO TURNO ---
+function sortList() { 
+    save(); 
+    players.sort((a, b) => b.init - a.init); 
+    players.forEach(p => p.finished = false); 
+    lastTeam = null; 
+    render(); 
 }
 
 function nextTurn() {
     if (players.length === 0) return;
-
-    let actor = null;
-
-    // 🎯 Prioridade: dono da bola se for vez do time dele
-    if (ballOwnerId) {
-        const ballOwner = players.find(p => p.id === ballOwnerId && !p.finished);
-        if (ballOwner && ballOwner.team === nextTeamTurn) {
-            actor = ballOwner;
-        }
+    save();
+    let allowedTeam = lastTeam === 'A' ? 'B' : (lastTeam === 'B' ? 'A' : null);
+    
+    let actor = players.find(p => !p.finished && p.id === ballOwnerId && (allowedTeam === null || p.team === allowedTeam));
+    if (!actor) actor = players.find(p => !p.finished && (allowedTeam === null || p.team === allowedTeam));
+    if (!actor) actor = players.find(p => !p.finished);
+    
+    if (actor) { 
+        actor.finished = true; 
+        lastTeam = actor.team; 
     }
 
-    // 🔁 Pega jogador do time correto
-    if (!actor) {
-        actor = players.find(p => !p.finished && p.team === nextTeamTurn);
-    }
-
-    // 🔄 Fallback se não houver do time esperado
-    if (!actor) {
-        actor = players.find(p => !p.finished);
-    }
-
-    if (actor) {
-        actor.finished = true;
-        // Alterna time obrigatoriamente
-        nextTeamTurn = actor.team === 'A' ? 'B' : 'A';
-    }
-
-    const allFinished = players.every(p => p.finished);
-
-    if (allFinished) {
-        currentRound++;
-        players.forEach(p => p.finished = false);
-        nextTeamTurn = 'A';
-
-        if (currentRound > 30) {
-            if (currentHalf === 1) {
-                alert("FIM DO PRIMEIRO TEMPO! Recupere o fôlego.");
-                currentHalf = 2;
-            } else {
-                alert("FIM DE PAPO! Apito final no estádio.");
-                currentHalf = 1;
+    if (players.every(p => p.finished)) {
+        currentRound++; 
+        players.forEach(p => p.finished = false); 
+        lastTeam = null;
+        if (currentRound > 10) {
+            if (currentHalf === 1) { 
+                alert("Intervalo! Role 1d5 para descanso."); 
+                currentHalf = 2; 
+                currentRound = 1; 
+                seconds = 0; 
+            } else { 
+                alert("Fim de Jogo!"); 
+                currentRound = 10; 
             }
-            currentRound = 1;
         }
     }
-
     render();
 }
 
-function removePlayer(id) {
-    players = players.filter(p => p.id !== id);
-    if (ballOwnerId === id) ballOwnerId = null;
-    render();
+// --- HISTÓRICO E RENDERIZAÇÃO ---
+function save() { 
+    history.push(JSON.stringify({ 
+        players: JSON.parse(JSON.stringify(players)), 
+        lastTeam, 
+        currentRound, 
+        ballOwnerId 
+    })); 
+    if (history.length > 20) history.shift(); 
+}
+
+function undo() { 
+    if (history.length > 0) { 
+        const s = JSON.parse(history.pop()); 
+        players = s.players; 
+        lastTeam = s.lastTeam; 
+        currentRound = s.currentRound; 
+        ballOwnerId = s.ballOwnerId; 
+        render(); 
+    } 
 }
 
 function render() {
-    const listContainer = document.getElementById('player-list');
-    listContainer.innerHTML = '';
-
-    document.getElementById('match-time').innerText = `${currentHalf}º TEMPO`;
-    document.getElementById('round-count').innerText = currentRound;
-
-    const finishedCount = players.filter(p => p.finished).length;
-    document.getElementById('turn-stats').innerText =
-        `Ações da rodada: ${finishedCount} / ${players.length}`;
-
-    players.forEach((p) => {
-        const li = document.createElement('div');
-        li.className = `player-card team-${p.team} ${p.id === ballOwnerId ? 'has-ball' : ''} ${p.finished ? 'finished' : ''}`;
-        li.setAttribute("draggable", true);
-        li.setAttribute("data-id", p.id);
-
-        li.innerHTML = `
-            <div class="init-badge">${p.init}</div>
-            <div class="info">
-                <strong>${p.name}</strong>
-                <span class="team-tag">
-                    Time ${p.team === 'A' ? 'A (Azul)' : 'B (Rosa)'} • 
-                    ${p.finished ? 'Ação Concluída' : 'Aguardando'}
-                </span>
-            </div>
-            <div class="ball-toggle" onclick="toggleBall(${p.id})">⚽</div>
-            <button class="remove-btn" onclick="removePlayer(${p.id})">✕</button>
-        `;
-        listContainer.appendChild(li);
-    });
-}
-
-/* DRAG AND DROP */
-
-let dragged = null;
-
-document.addEventListener("dragstart", e => {
-    if (e.target.classList.contains("player-card")) {
-        dragged = e.target;
-        e.target.classList.add("dragging");
-    }
-});
-
-document.addEventListener("dragend", e => {
-    if (e.target.classList.contains("player-card")) {
-        e.target.classList.remove("dragging");
-        updateOrder();
-    }
-});
-
-document.addEventListener("dragover", e => {
-    e.preventDefault();
-    const container = document.getElementById("player-list");
-    const afterElement = getAfterElement(container, e.clientY);
-    const dragging = document.querySelector(".dragging");
-    if (!dragging) return;
-
-    if (afterElement == null) {
-        container.appendChild(dragging);
+    const list = document.getElementById('player-list'); 
+    list.innerHTML = '';
+    document.getElementById('round-num').innerText = currentRound;
+    document.getElementById('half-disp').innerText = `${currentHalf}º TEMPO`;
+    
+    const alertBox = document.getElementById('turn-alert');
+    if (lastTeam === null) { 
+        alertBox.innerText = "QUALQUER UM PODE COMEÇAR"; 
+        alertBox.style.background = "#555"; 
     } else {
-        container.insertBefore(dragging, afterElement);
+        const next = lastTeam === 'A' ? 'TIME B' : 'TIME A';
+        alertBox.innerText = `VEZ DO: ${next}`;
+        alertBox.style.background = lastTeam === 'A' ? 'var(--team-b-color)' : 'var(--team-a-color)';
     }
-});
 
-function getAfterElement(container, y) {
-    const elements = [...container.querySelectorAll(".player-card:not(.dragging)")];
-    return elements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        if (offset < 0 && offset > closest.offset) {
-            return { offset: offset, element: child };
-        } else {
-            return closest;
-        }
-    }, { offset: Number.NEGATIVE_INFINITY }).element;
-}
-
-function updateOrder() {
-    const cards = document.querySelectorAll(".player-card");
-    const newOrder = [];
-    cards.forEach(card => {
-        const id = parseInt(card.getAttribute("data-id"));
-        const player = players.find(p => p.id === id);
-        if (player) newOrder.push(player);
+    players.forEach(p => {
+        const card = document.createElement('div');
+        card.className = `player-card team-${p.team} ${p.finished ? 'finished' : ''} ${p.id === ballOwnerId ? 'has-ball' : ''}`;
+        card.innerHTML = `
+            <div style="font-weight:bold; min-width:30px">${p.init}</div>
+            <div style="flex-grow:1">${p.name}</div>
+            <div style="cursor:pointer; font-size:1.5em" onclick="toggleBall(${p.id})">⚽</div>
+        `;
+        list.appendChild(card);
     });
-    players = newOrder;
 }
+
+// Função auxiliar para alternar a posse de bola
+function toggleBall(id) {
+    save();
+    ballOwnerId = (ballOwnerId === id ? null : id);
+    render();
+}
+
+// Inicializa a tela
+render();

@@ -4,11 +4,10 @@
     --team-a-color: #00b4d8;
     --team-b-color: #f72585;
     --ball: #ffbe0b;
-    --done: #222;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, sans-serif;
+    font-family: 'Segoe UI', sans-serif;
     background-color: var(--pitch);
     color: white;
     display: flex;
@@ -18,169 +17,84 @@ body {
     margin: 0;
 }
 
-.scoreboard {
-    background: #000;
-    padding: 15px 40px;
-    border-radius: 0 0 20px 20px;
-    margin-bottom: 20px;
-    border: 2px solid var(--ball);
-    border-top: none;
+.match-settings-banner {
+    background: var(--ball);
+    color: black;
+    font-weight: 900;
+    font-size: 1.4em;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    width: 100%;
+    max-width: 600px;
     text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 2px solid white;
 }
+
+.info-board {
+    background: #000;
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
+    border-radius: 12px;
+    border: 2px solid var(--ball);
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.score-container { display: flex; justify-content: space-around; align-items: center; }
+
+.team-score-box input { 
+    font-size: 1.2em; 
+    width: 90px !important; 
+    text-align: center; 
+    background: #222 !important; 
+    color: white; 
+    border: 1px solid #444; 
+}
+
+.half-title { font-weight: bold; color: var(--ball); font-size: 1.2em; }
+.timer-display { font-size: 2.5em; color: #ff4d4d; font-family: monospace; }
+.highlight { color: var(--ball); font-weight: bold; }
+
+.timer-btn { background: white; width: 100%; color: black; margin-top: 15px; font-size: 1.1em; }
 
 .stadium {
     width: 100%;
     max-width: 600px;
     background: var(--grass);
-    border: 4px solid rgba(255,255,255,0.1);
     border-radius: 12px;
     padding: 20px;
     box-sizing: border-box;
 }
 
-.setup-area {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr auto auto;
-    gap: 8px;
-    margin-bottom: 20px;
-}
+.active-team-indicator { padding: 10px; margin-bottom: 15px; border-radius: 6px; font-weight: bold; text-align: center; font-size: 1.1em; }
 
-input, select {
-    padding: 10px;
-    border-radius: 5px;
-    border: none;
-    background: #081c15;
-    color: white;
-    width: 100%;
-    box-sizing: border-box;
-}
-
-.btn-dice {
-    background: #495057;
-    color: white;
-    cursor: pointer;
-    border-radius: 5px;
-    border: none;
-    padding: 0 12px;
-    font-size: 1.2em;
-}
-
-.btn-add {
-    background: var(--ball);
-    color: black;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 5px;
-    border: none;
-    padding: 0 15px;
-}
+.player-input-grid { display: grid; grid-template-columns: 2fr 1fr 1fr auto auto; gap: 5px; margin-bottom: 20px; }
 
 .player-card {
     background: rgba(0,0,0,0.4);
     margin: 8px 0;
-    padding: 10px 15px;
+    padding: 12px;
     border-radius: 8px;
     display: flex;
     align-items: center;
     gap: 15px;
     border-left: 10px solid transparent;
-    transition: all 0.3s ease;
-    cursor: grab;
-}
-
-.player-card.dragging {
-    opacity: 0.5;
-    transform: scale(1.05);
 }
 
 .player-card.team-A { border-left-color: var(--team-a-color); }
 .player-card.team-B { border-left-color: var(--team-b-color); }
+.player-card.finished { opacity: 0.2; filter: grayscale(1); }
+.player-card.has-ball { border: 2px solid var(--ball); box-shadow: 0 0 15px var(--ball); background: rgba(255, 190, 11, 0.1); }
 
-.player-card.finished {
-    background: var(--done);
-    opacity: 0.35;
-    filter: grayscale(1);
-    transform: scale(0.97);
-}
+.btn-main { padding: 10px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; text-transform: uppercase; }
+.btn-dice { background: #444; color: white; border-radius: 5px; border: none; padding: 10px; cursor: pointer; font-size: 1.2em; }
+.add-btn { background: var(--ball); font-size: 1.3em; }
 
-.player-card.has-ball {
-    background: rgba(255, 190, 11, 0.25) !important;
-    border: 2px solid var(--ball);
-    opacity: 1 !important;
-    filter: none !important;
-    transform: scale(1.03);
-    box-shadow: 0 0 20px rgba(255, 190, 11, 0.4);
-    z-index: 5;
-}
-
-.init-badge {
-    background: #000;
-    padding: 5px 8px;
-    border-radius: 4px;
-    color: var(--ball);
-    font-weight: bold;
-    min-width: 28px;
-    text-align: center;
-}
-
-.info { flex-grow: 1; }
-
-.team-tag {
-    font-size: 0.75em;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-.team-A .team-tag { color: var(--team-a-color); }
-.team-B .team-tag { color: var(--team-b-color); }
-
-.ball-toggle {
-    font-size: 1.8em;
-    cursor: pointer;
-    filter: grayscale(1);
-    opacity: 0.2;
-    transition: 0.2s;
-}
-
-.has-ball .ball-toggle {
-    filter: grayscale(0);
-    opacity: 1;
-}
-
-.controls {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.btn-main {
-    padding: 15px;
-    font-weight: bold;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.remove-btn {
-    background: transparent;
-    color: #ff4d4d;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-    font-size: 1.1em;
-    padding: 5px;
-}
-
-.counter-info {
-    font-size: 0.8em;
-    color: #aaa;
-    text-align: center;
-    margin-top: 10px;
-}
+.action-footer { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+.undo-btn { background: #ff4d4d; color: white; }
+.sort-btn { background: #555; color: white; }
+.next-btn { background: #38b000; color: white; font-size: 1.1em; }

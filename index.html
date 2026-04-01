@@ -1,39 +1,56 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turnos RPG Futebol</title>
+    <title>RPG Futebol - Edição Final</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="scoreboard">
-    <div id="match-time" style="font-size: 1.3em;">1º TEMPO</div>
-    <div style="font-size: 1em; color: var(--ball);">
-        RODADA: <span id="round-count">1</span> / 30
+<div class="match-settings-banner">
+    🏟️ 2 TEMPOS (10 TURNOS) | DESCANSO: 1d5
+</div>
+
+<div class="info-board">
+    <div class="score-container">
+        <div class="team-score-box">
+            <input type="text" id="n-a" value="TIME A">
+            <input type="number" id="s-a" value="0">
+        </div>
+        <div>
+            <div id="half-disp" class="half-title">1º TEMPO</div>
+            <div id="timer" class="timer-display">00:00</div>
+            <div style="margin-top: 5px;">TURNO: <span id="round-num" class="highlight">1</span>/10</div>
+        </div>
+        <div class="team-score-box">
+            <input type="text" id="n-b" value="TIME B">
+            <input type="number" id="s-b" value="0">
+        </div>
     </div>
+    <button id="btn-timer" class="btn-main timer-btn" onclick="toggleTimer()">JOGO INICIADO</button>
 </div>
 
 <div class="stadium">
-    <div class="setup-area">
-        <input type="text" id="p-name" placeholder="Nome do Jogador">
+    <div id="turn-alert" class="active-team-indicator">Defina os jogadores</div>
+    
+    <div class="player-input-grid">
+        <input type="text" id="p-name" placeholder="Nome">
         <select id="p-team">
-            <option value="A">Time A (Azul)</option>
-            <option value="B">Time B (Rosa)</option>
+            <option value="A">Time A</option>
+            <option value="B">Time B</option>
         </select>
         <input type="number" id="p-init" placeholder="Ini">
         <button class="btn-dice" onclick="roll1d20()">🎲</button>
-        <button class="btn-add" onclick="addPlayer()">+</button>
+        <button class="btn-main add-btn" onclick="addPlayer()">+</button>
     </div>
 
     <div id="player-list"></div>
 
-    <div class="counter-info" id="turn-stats">Ações da rodada: 0 / 0</div>
-
-    <div class="controls">
-        <button class="btn-main" style="background: white;" onclick="sortAndInterleave()">Organizar (A-B)</button>
-        <button class="btn-main" style="background: #38b000; color: white;" onclick="nextTurn()">Ação Finalizada ➔</button>
+    <div class="action-footer">
+        <button class="btn-main undo-btn" onclick="undo()">↩ Erro</button>
+        <button class="btn-main sort-btn" onclick="sortList()">Organizar</button>
+        <button class="btn-main next-btn" onclick="nextTurn()">Ação OK ➔</button>
     </div>
 </div>
 
